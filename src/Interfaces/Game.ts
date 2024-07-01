@@ -7,9 +7,9 @@ export interface Game {
     publisher_id: string,
     status: string,
     played_time: number,
-    beat_time: number,
+    how_long_to_beat: number,
     ranking: number,
-    rating: string,
+    rating: number,
     developer: string,
     publisher: string
 }
