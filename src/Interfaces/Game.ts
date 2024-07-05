@@ -1,15 +1,13 @@
 export interface Game {
     id: string,
     title: string,
-    genres: string[],
+    genre: string,
     platform: string,
-    developer_id: string,
-    publisher_id: string,
+    developer: string,
+    publisher: string,
     status: string,
     played_time: number,
-    how_long_to_beat: number,
+    time_to_beat: number,
+    rating: string,
     ranking: number,
-    rating: number,
-    developer: string,
-    publisher: string
 }
