@@ -1,4 +1,4 @@
-export interface Game {
+export interface GameData {
     id: string,
     title: string,
     genre: string,
@@ -10,4 +10,12 @@ export interface Game {
     time_to_beat: number,
     rating: string,
     ranking: number,
+}
+
+export interface StopwatchData {
+    game_id: string,
+    game_title: string,
+    start_time: string,
+    end_time: string,
+    duration: number,
 }

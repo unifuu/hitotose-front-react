@@ -1,6 +1,6 @@
 import './App.css';
 import { Route, Routes } from 'react-router-dom';
-import Game from './Components/Game';
+import Game from './Components/Game/Game';
 
 function App() {
   return (
