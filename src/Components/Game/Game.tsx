@@ -310,7 +310,7 @@ export default function Game() {
     }
 
     function fetchStopwatch() {
-        fetch(`/api/act/stopwatch`, { method: "GET" })
+        fetch(`/api/game/stopwatch`, { method: "GET" })
             .then(resp => resp.json())
             .then(data => {
                 if (data != null) {
@@ -322,30 +322,30 @@ export default function Game() {
     function refresh() {
         fetchStopwatch()
 
-        fetch(`/api/game/status/${tabStatus}/${tabPlatform}/${page}`)
+        fetch(`/api/game/status/${tabStatus}/platform/${tabPlatform}/p/${page}`)
             .then(resp => resp.json())
             .then(data => {
                 if (data["games"] != null) {
-                    setGames(data["games"]);
+                    setGames(data["games"])
                 } else {
                     setGames([])
                 }
-                setTotalPages(data["total_page"]);
+                setTotalPages(data["pages"]);
             })
 
         fetch(`/api/game/badge/status/${tabStatus}`)
             .then(resp => resp.json())
             .then(data => {
-                setPlayedCnt(data.badges["played"]);
-                setPlayingCnt(data.badges["playing"]);
-                setToPlayCnt(data.badges["to_play"]);
+                setPlayedCnt(data["played"]);
+                setPlayingCnt(data["playing"]);
+                setToPlayCnt(data["to_play"]);
 
-                setAllCount(data.badges["all_platform"]);
-                setPcCount(data.badges["pc"]);
-                setPsCount(data.badges["playstation"]);
-                setNsCount(data.badges["nintendo_switch"]);
-                setXboxCount(data.badges["xbox"]);
-                setMobileCount(data.badges["mobile"]);
+                setAllCount(data["all_platform"]);
+                setPcCount(data["pc"]);
+                setPsCount(data["playstation"]);
+                setNsCount(data["nintendo_switch"]);
+                setXboxCount(data["xbox"]);
+                setMobileCount(data["mobile"]);
             })
     }
 
