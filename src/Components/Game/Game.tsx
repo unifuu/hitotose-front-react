@@ -60,6 +60,8 @@ import MenuIcon from '@mui/icons-material/Menu'
 import AlarmOffIcon from '@mui/icons-material/AlarmOff'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { GameData, StopwatchData } from '../../interfaces'
+import selectOptions from '../../selectOptions.json'
+import Cookies from 'js-cookie'
 
 // Icons
 import { Tablet } from 'react-bootstrap-icons'
@@ -69,13 +71,16 @@ import { Playstation } from 'react-bootstrap-icons'
 import { Xbox } from 'react-bootstrap-icons'
 import { CheckSquare } from 'react-bootstrap-icons'
 import { Square } from 'react-bootstrap-icons'
-import { hourOfDuration, percentage, rating } from '../../utils'
+import { getCSRFToken, hourOfDuration, minOfDuration, percentage, rating } from '../../utils'
 import { DoingBadge, DoneBadge, TodoBadge } from '../Common/Badges'
 import TodoIcon from '@mui/icons-material/SyncLock'
 import DoingIcon from '@mui/icons-material/Sync'
 import DoneIcon from '@mui/icons-material/PublishedWithChanges'
 
 export default function Game() {
+    const csrftoken = Cookies.get('csrftoken')
+    console.log(csrftoken)
+
     const [stopwatch, setStopwatch] = useState<StopwatchData>()
 
     const pcScreen = useMediaQuery('(min-width:600px)')
@@ -215,12 +220,31 @@ export default function Game() {
 
     // Create game dialog
     const [openCreateGameDialog, setOpenCreateGameDialog] = useState(false);
-    const handleCreateGameDialogOpen = () => { fetchCreateGame() }
+    const handleCreateGameDialogOpen = () => { setOpenCreateGameDialog(true); }
     const handleCreateGameDialogClose = () => {
         setOpenCreateGameDialog(false)
     }
 
     // Update Game Dialog
+    const handleUpdateGameSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const formData = new FormData(event.target as HTMLFormElement);
+
+        const response = await fetch(`/api/game/update/${updateGame?.id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken || '',
+            },
+            body: formData,
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Success:', data);
+        } else {
+            console.error('Failed to submit form');
+        }
+    }
     const [openUpdateGameDialog, setOpenUpdateGameDialog] = useState(false)
     const handleUpdateGameDialogOpen = (id: String) => { fetchUpdateGame(id) }
     const handleUpdateGameDialogClose = () => {
@@ -255,51 +279,10 @@ export default function Game() {
         setErrorAlertOpen(false)
     }
 
-    const [createGame, setCreateGame] = useState({
-        developers: [],
-        publishers: [],
-        genres: [],
-        platforms: [],
-    });
-
-    const [updateGame, setUpdateGame] = useState({
-        game: {
-            id: String,
-            title: String,
-            genre: String,
-            platform: String,
-            developer_id: String,
-            publisher_id: String,
-            status: String,
-            total_time: Number,
-            how_long_to_beat: Number,
-            rating: String,
-        },
-        developers: [],
-        publishers: [],
-        genres: [],
-        platforms: [],
-        played_hour: Number,
-        played_min: Number,
-        hltb_hour: Number,
-        hltb_min: Number,
-    })
-
-    function fetchCreateGame() {
-        fetch("/api/game/create", {
-            method: "GET",
-        })
-            .then(resp => resp.json())
-            .then(data => {
-                if (data != null) {
-                    setCreateGame(data);
-                    setOpenCreateGameDialog(true);
-                }
-            });
-    }
+    const [updateGame, setUpdateGame] = useState<GameData>()
 
     function fetchUpdateGame(id: String) {
-        fetch(`/api/game/update?id=${id}`, { method: "GET" })
+        fetch(`/api/game/update/${id}`, { method: "GET" })
             .then(resp => resp.json())
             .then(data => {
                 if (data != null) {
@@ -349,7 +332,7 @@ export default function Game() {
             })
     }
 
-    const handleDeleteGame = (id: String) => {
+    const handleDeleteGame = (id: string | undefined) => {
         fetch(`/api/game/delete?id=${id}`, {
             method: "POST",
         })
@@ -855,12 +838,15 @@ export default function Game() {
                         Update Game
                     </DialogTitle>
                     <DialogContent>
-                        <form method="post" encType="multipart/form-data" action="/api/game/update">
+                        <form method="post" encType="multipart/form-data" action="/api/game/update/">
+                        {/* <form method="post" encType="multipart/form-data" action={`/api/game/update/${updateGame?.id}/`} onSubmit={handleUpdateGameSubmit}> */}
+                            <input type="hidden" name="csrfmiddlewaretoken" value={csrftoken || ''} />
+
                             <FormControl fullWidth sx={{ mt: 1 }}>
                                 <TextField
                                     name="id"
                                     label="Id"
-                                    defaultValue={updateGame.game.id}
+                                    defaultValue={updateGame?.id}
                                     inputProps={{
                                         readOnly: true
                                     }}
@@ -871,7 +857,7 @@ export default function Game() {
                                 <TextField
                                     name="title"
                                     label="Title"
-                                    defaultValue={updateGame.game.title}
+                                    defaultValue={updateGame?.title}
                                 >
                                 </TextField>
                             </FormControl>
@@ -879,18 +865,11 @@ export default function Game() {
                             <Grid container>
                                 <Grid item sx={{ width: '48%' }}>
                                     <FormControl fullWidth sx={{ mt: 2 }}>
-                                        <InputLabel htmlFor="developer">Developer</InputLabel>
-                                        <Select
-                                            name="developer_id"
+                                        <TextField
+                                            name="developer"
                                             label="Developer"
-                                            defaultValue={updateGame.game.developer_id}
-                                        >
-                                            {updateGame.developers?.map((dev: any, index) => {
-                                                return (
-                                                    <MenuItem key={index} value={dev.id}>{dev.name}</MenuItem>
-                                                )
-                                            })}
-                                        </Select>
+                                            defaultValue={updateGame?.developer}
+                                        />
                                     </FormControl>
                                 </Grid>
 
@@ -898,18 +877,11 @@ export default function Game() {
 
                                 <Grid item sx={{ width: '48%' }}>
                                     <FormControl fullWidth sx={{ mt: 2 }}>
-                                        <InputLabel htmlFor="publisher">Publisher</InputLabel>
-                                        <Select
-                                            name="publisher_id"
+                                        <TextField
+                                            name="publisher"
                                             label="Publisher"
-                                            defaultValue={updateGame.game.publisher_id}
-                                        >
-                                            {updateGame.publishers?.map((pub: any, index) => {
-                                                return (
-                                                    <MenuItem key={index} value={pub.id}>{pub.name}</MenuItem>
-                                                )
-                                            })}
-                                        </Select>
+                                            defaultValue={updateGame?.publisher}
+                                        />
                                     </FormControl>
                                 </Grid>
                             </Grid>
@@ -924,7 +896,7 @@ export default function Game() {
                                         <Select
                                             name="status"
                                             label="Status"
-                                            defaultValue={updateGame.game.status}
+                                            defaultValue={updateGame?.status}
                                         >
                                             <MenuItem key="Played" value="Played">Played</MenuItem>
                                             <MenuItem key="Playing" value="Playing">Playing</MenuItem>
@@ -944,11 +916,11 @@ export default function Game() {
                                         <Select
                                             name="genre"
                                             label="Genre"
-                                            defaultValue={updateGame.game.genre}
+                                            defaultValue={updateGame?.genre}
                                         >
-                                            {updateGame.genres?.map((genre: any, index) => {
+                                            {selectOptions.genres.map((option: any, index) => {
                                                 return (
-                                                    <MenuItem key={index} value={genre}>{genre}</MenuItem>
+                                                    <MenuItem key={index} value={option.value}>{option.label}</MenuItem>
                                                 )
                                             })}
                                         </Select>
@@ -966,11 +938,11 @@ export default function Game() {
                                         <Select
                                             name="platform"
                                             label="Platform"
-                                            defaultValue={updateGame.game.platform}
+                                            defaultValue={updateGame?.platform}
                                         >
-                                            {updateGame.platforms?.map((platform: any, index) => {
+                                            {selectOptions.platforms.map((option: any, index) => {
                                                 return (
-                                                    <MenuItem key={index} value={platform}>{platform}</MenuItem>
+                                                    <MenuItem key={index} value={option.value}>{option.label}</MenuItem>
                                                 )
                                             })}
                                         </Select>
@@ -983,18 +955,13 @@ export default function Game() {
                                         <Select
                                             name="rating"
                                             label="Rating"
-                                            defaultValue={updateGame.game.rating}
+                                            defaultValue={updateGame?.rating}
                                         >
-                                            <MenuItem key="10" value="10">Perfect</MenuItem>
-                                            <MenuItem key="9" value="9">Excellent</MenuItem>
-                                            <MenuItem key="8" value="8">Fantastic</MenuItem>
-                                            <MenuItem key="7" value="7">Great</MenuItem>
-                                            <MenuItem key="6" value="6">Good</MenuItem>
-                                            <MenuItem key="5" value="5">Fine</MenuItem>
-                                            <MenuItem key="4" value="4">Not Satisfied</MenuItem>
-                                            <MenuItem key="3" value="3">Boring</MenuItem>
-                                            <MenuItem key="2" value="2">Bad</MenuItem>
-                                            <MenuItem key="1" value="1">Trash</MenuItem>
+                                            {selectOptions.rating.map((option: any, index) => {
+                                                return (
+                                                    <MenuItem key={index} value={option.value}>{option.label}</MenuItem>
+                                                )
+                                            })}
                                         </Select>
                                     </FormControl>
                                 </Grid>
@@ -1004,10 +971,10 @@ export default function Game() {
                                 <Grid item sx={{ width: '30%' }}>
                                     <FormControl fullWidth>
                                         <TextField
-                                            name="played_hour"
+                                            name="played_time_hour"
                                             type="number"
                                             label="Played Hour"
-                                            defaultValue={updateGame.played_hour}
+                                            defaultValue={hourOfDuration(updateGame?.played_time)}
                                         >
                                         </TextField>
                                     </FormControl>
@@ -1016,10 +983,10 @@ export default function Game() {
                                 <Grid item sx={{ width: '17%' }}>
                                     <FormControl fullWidth>
                                         <TextField
-                                            name="played_min"
+                                            name="playd_time_min"
                                             type="number"
                                             label="Min"
-                                            defaultValue={updateGame.played_min}
+                                            defaultValue={minOfDuration(updateGame?.played_time)}
                                         >
                                         </TextField>
                                     </FormControl>
@@ -1030,10 +997,10 @@ export default function Game() {
                                 <Grid item sx={{ width: '30%' }}>
                                     <FormControl fullWidth>
                                         <TextField
-                                            name="hltb_hour"
+                                            name="time_to_beat_hour"
                                             type="number"
                                             label="How Long To Beat Hour"
-                                            defaultValue={updateGame.hltb_hour}
+                                            defaultValue={hourOfDuration(updateGame?.time_to_beat)}
                                         >
                                         </TextField>
                                     </FormControl>
@@ -1044,10 +1011,10 @@ export default function Game() {
                                 <Grid item sx={{ width: '17%' }}>
                                     <FormControl fullWidth>
                                         <TextField
-                                            name="hltb_min"
+                                            name="time_to_beat_min"
                                             type="number"
                                             label="Min"
-                                            defaultValue={updateGame.hltb_min}
+                                            defaultValue={minOfDuration(updateGame?.time_to_beat)}
                                         >
                                         </TextField>
                                     </FormControl>
@@ -1063,7 +1030,7 @@ export default function Game() {
                             </Grid>
 
                             <DialogActions style={{ justifyContent: "space-between" }} sx={{ mt: 1, mb: -1, ml: -1, mr: -1 }}>
-                                <Button color="error" onClick={e => handleDeleteGame(updateGame.game.id.toString())}>Delete</Button>
+                                <Button color="error" onClick={e => handleDeleteGame(updateGame?.id)}>Delete</Button>
                                 <Box>
                                     <Button color="secondary" onClick={handleUpdateGameDialogClose}>Cancel</Button>
                                     <Button color="success" type="submit">Update</Button>
@@ -1086,28 +1053,20 @@ export default function Game() {
                         </FormControl>
 
                         <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel htmlFor="developer">Developer</InputLabel>
-                            <Select name="developer_id" label="Developer" required>
-                                {createGame.developers?.map((dev: any, index) => {
-                                    return (<MenuItem key={index} value={dev.id}>{dev.name}</MenuItem>)
-                                })}
-                            </Select>
+                            <TextField name="developer" label="Developer" required />
                         </FormControl>
 
                         <FormControl fullWidth sx={{ mt: 2 }}>
-                            <InputLabel htmlFor="publisher">Publisher</InputLabel>
-                            <Select name="publisher_id" label="Publisher" required>
-                                {createGame.publishers?.map((pub: any, index) => {
-                                    return (<MenuItem key={index} value={pub.id}>{pub.name}</MenuItem>)
-                                })}
-                            </Select>
+                            <TextField name="publisher" label="Publisher" required />
                         </FormControl>
 
                         <FormControl fullWidth sx={{ mt: 2 }}>
                             <InputLabel htmlFor="Genre">Genre</InputLabel>
                             <Select name="genre" label="Genre" required>
-                                {createGame.genres?.map((genre: any, index) => {
-                                    return (<MenuItem key={index} value={genre}>{genre}</MenuItem>)
+                                {selectOptions.genres.map((option: any, index) => {
+                                    return (
+                                        <MenuItem key={index} value={option.value}>{option.label}</MenuItem>
+                                    )
                                 })}
                             </Select>
                         </FormControl>
@@ -1115,9 +1074,9 @@ export default function Game() {
                         <FormControl fullWidth sx={{ mt: 2 }}>
                             <InputLabel htmlFor="Platform">Platform</InputLabel>
                             <Select name="platform" label="Platform" required>
-                                {createGame.platforms?.map((platform: any, index) => {
+                                {selectOptions.platforms.map((option: any, index) => {
                                     return (
-                                        <MenuItem key={index} value={platform}>{platform}</MenuItem>
+                                        <MenuItem key={index} value={option.value}>{option.label}</MenuItem>
                                     )
                                 })}
                             </Select>

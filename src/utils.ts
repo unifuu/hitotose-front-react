@@ -1,18 +1,39 @@
+import Cookies from 'js-cookie'
+
+// export function getCSRFToken(): string | null {
+//     const name = 'csrftoken';
+//     const cookieValue = document.cookie
+//         .split('; ')
+//         .find(row => row.startsWith(name))
+//         ?.split('=')[1];
+//     return cookieValue || null;
+// }
+
+export function getCSRFToken() {
+    return Cookies.get('csrftoken');
+}
+
 /**
  * @param duration = 65
  * @returns hour = 1
  */
-export function hourOfDuration(duration: number): number {
-    if (duration < 0) { return 0 }
-    return Math.floor(duration / 60)
+export function hourOfDuration(duration: number | undefined | null): number {
+    if (duration == null || duration < 0) {
+        return 0;
+    }
+    return Math.floor(duration / 60);
 }
 
 /**
  * @param duration = 65
  * @returns minute = 5
  */
-export function minOfDuration(duration: number): number {
-    if (duration < 0) { return 0 }
+export function minOfDuration(duration: number | undefined | null): number {
+    if (duration == null) {
+        return 0;
+    } else if (duration < 0) {
+        return -1;
+    }
     return duration % 60
 }
 

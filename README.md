@@ -20,4 +20,7 @@ npm i react-bootstrap-icons
 
 # Install React Router
 npm install react-router-dom
+
+# Install JS-COOKIE
+npm i --save-dev @types/js-cookie
 ```
