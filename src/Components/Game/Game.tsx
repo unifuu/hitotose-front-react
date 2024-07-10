@@ -1013,7 +1013,7 @@ export default function Game() {
                                         <TextField
                                             name="time_to_beat_hour"
                                             type="number"
-                                            label="How Long To Beat Hour"
+                                            label="Hour to Beat"
                                             defaultValue={hourOfDuration(updateGame?.time_to_beat)}
                                         >
                                         </TextField>
