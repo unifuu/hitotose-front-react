@@ -78,8 +78,10 @@ import DoingIcon from '@mui/icons-material/Sync'
 import DoneIcon from '@mui/icons-material/PublishedWithChanges'
 
 export default function Game() {
-    const csrftoken = Cookies.get('csrftoken')
-    console.log(csrftoken)
+    // const csrftoken = Cookies.get('csrftoken')
+    // console.log(csrftoken)
+
+    const [csrfToken, setCsrfToken] = useState<string>('');
 
     const [stopwatch, setStopwatch] = useState<StopwatchData>()
 
@@ -134,6 +136,18 @@ export default function Game() {
 
     // Effects
     useEffect(() => {
+        const getCsrfToken = async () => {
+            try {
+                const response = await fetch('/api/csrf/');
+                const data = await response.json();
+                setCsrfToken(data['csrf_token']);
+            } catch (error) {
+                console.error('Error fetching CSRF token:', error);
+            }
+        };
+
+        getCsrfToken();
+
         refresh()
     }, [tabStatus, tabPlatform, page])
 
@@ -226,25 +240,25 @@ export default function Game() {
     }
 
     // Update Game Dialog
-    const handleUpdateGameSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        const formData = new FormData(event.target as HTMLFormElement);
+    // const handleUpdateGameSubmit = async (event: React.FormEvent) => {
+    //     event.preventDefault();
+    //     const formData = new FormData(event.target as HTMLFormElement);
 
-        const response = await fetch(`/api/game/update/${updateGame?.id}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken || '',
-            },
-            body: formData,
-        });
+    //     const response = await fetch(`/api/game/update/${updateGame?.id}/`, {
+    //         method: 'POST',
+    //         headers: {
+    //             'X-CSRFToken': csrftoken || '',
+    //         },
+    //         body: formData,
+    //     });
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Success:', data);
-        } else {
-            console.error('Failed to submit form');
-        }
-    }
+    //     if (response.ok) {
+    //         const data = await response.json();
+    //         console.log('Success:', data);
+    //     } else {
+    //         console.error('Failed to submit form');
+    //     }
+    // }
     const [openUpdateGameDialog, setOpenUpdateGameDialog] = useState(false)
     const handleUpdateGameDialogOpen = (id: String) => { fetchUpdateGame(id) }
     const handleUpdateGameDialogClose = () => {
@@ -333,8 +347,8 @@ export default function Game() {
     }
 
     const handleDeleteGame = (id: string | undefined) => {
-        fetch(`/api/game/delete?id=${id}`, {
-            method: "POST",
+        fetch(`/api/game/delete/${id}`, {
+            method: "DELETE",
         })
             .then(() => {
                 handleUpdateGameDialogClose();
@@ -840,7 +854,7 @@ export default function Game() {
                     <DialogContent>
                         <form method="post" encType="multipart/form-data" action="/api/game/update/">
                         {/* <form method="post" encType="multipart/form-data" action={`/api/game/update/${updateGame?.id}/`} onSubmit={handleUpdateGameSubmit}> */}
-                            <input type="hidden" name="csrfmiddlewaretoken" value={csrftoken || ''} />
+                            <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken || ''} />
 
                             <FormControl fullWidth sx={{ mt: 1 }}>
                                 <TextField
@@ -983,7 +997,7 @@ export default function Game() {
                                 <Grid item sx={{ width: '17%' }}>
                                     <FormControl fullWidth>
                                         <TextField
-                                            name="playd_time_min"
+                                            name="played_time_min"
                                             type="number"
                                             label="Min"
                                             defaultValue={minOfDuration(updateGame?.played_time)}

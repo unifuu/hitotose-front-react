@@ -24,3 +24,17 @@ npm install react-router-dom
 # Install JS-COOKIE
 npm i --save-dev @types/js-cookie
 ```
+
+## Temp
+
+``` mongosh
+db.game.updateMany(
+    {},
+    { $unset: { developer: "" } }
+);
+
+db.game.updateMany(
+    {},
+    { $unset: { publisher: "" } }
+);
+```
