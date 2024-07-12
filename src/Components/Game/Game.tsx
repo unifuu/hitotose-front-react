@@ -378,12 +378,11 @@ export default function Game() {
     };
 
     const handleStartGaming = (id: string) => {
-        fetch(`/api/act/stopwatch/start?type=Gaming&id=${id}`, { method: "GET" })
+        fetch(`/api/game/start/${id}/`, { method: "GET" })
             .then(resp => {
                 if (!resp.ok) {
                     handleErrorAlertOpen()
                 } else {
-                    // window.location.reload()
                     refresh()
                     handleSuccessAlertOpen()
                 }
@@ -391,7 +390,7 @@ export default function Game() {
     }
 
     const handleStopStopwatch = () => {
-        fetch(`/api/act/stopwatch/stop`, { method: "GET" })
+        fetch(`/api/game/stop/`, { method: "GET" })
             .then(resp => {
                 handleWarningAlertOpen()
                 refresh()
