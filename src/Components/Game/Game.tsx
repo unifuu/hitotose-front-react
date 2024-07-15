@@ -380,6 +380,7 @@ export default function Game() {
     const handleStartGaming = (id: string) => {
         fetch(`/api/game/start/${id}/`, { method: "GET" })
             .then(resp => {
+                console.log(resp)
                 if (!resp.ok) {
                     handleErrorAlertOpen()
                 } else {

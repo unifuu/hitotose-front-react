@@ -2,6 +2,8 @@
 
 ## Memo
 
+### Command
+
 ``` sh
 # Create Project
 npx create-react-app hitotose --template typescript
@@ -25,16 +27,41 @@ npm install react-router-dom
 npm i --save-dev @types/js-cookie
 ```
 
+### Issue
+
+Create a file named `.env` with the following:
+
+``` .env
+DANGEROUSLY_DISABLE_HOST_CHECK=true
+```
+
 ## Temp
 
 ``` mongosh
-db.game.updateMany(
-    {},
-    { $unset: { developer: "" } }
-);
+db.game.updateMany({}, { $rename: { "developer_id": "developer" } });
+db.game.updateMany({}, { $rename: { "publisher_id": "publisher" } });
+db.game.updateMany({}, { $rename: { "how_long_to_beat": "time_to_beat" } });
 
-db.game.updateMany(
-    {},
-    { $unset: { publisher: "" } }
-);
+# db.game.updateMany({}, { $unset: { developer: "" } });
+# db.game.updateMany({}, { $unset: { publisher: "" } });
+
+db.game.find({}).forEach(function(doc) {
+  if (doc.developer instanceof ObjectId) {
+    db.game.updateOne(
+      { _id: doc._id },
+      { $set: { developer: doc.developer.toString() } }
+    );
+  }
+});
+
+db.game.find({}).forEach(function(doc) {
+  if (doc.publisher instanceof ObjectId) {
+    db.game.updateOne(
+      { _id: doc._id },
+      { $set: { publisher: doc.publisher.toString() } }
+    );
+  }
+});
 ```
+
+## Reference
