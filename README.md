@@ -25,6 +25,10 @@ npm install react-router-dom
 
 # Install JS-COOKIE
 npm i --save-dev @types/js-cookie
+
+npm install -g serve
+
+serve -s build -l 5000
 ```
 
 ### Issue
